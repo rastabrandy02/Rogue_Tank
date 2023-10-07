@@ -20,7 +20,8 @@ public class XP_Bar : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        XPBar.fillAmount = playerStats.currentXP / playerStats.XPToLevelUp;
+        XPBar.fillAmount = playerStats.XPInThisLevelCurrent / playerStats.XPInThisLevelTotal;
+        
         XPBarText.text = "Lv. " + playerStats.currentLevel.ToString();
     }
 }

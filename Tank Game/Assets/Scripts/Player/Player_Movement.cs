@@ -5,6 +5,7 @@ using UnityEngine;
 public class Player_Movement : MonoBehaviour
 {
     Player_Stats playerStats;
+    Player_Animations playerAnimations;
 
     Rigidbody2D rb;
     Camera cam;    
@@ -14,7 +15,8 @@ public class Player_Movement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         playerStats = GetComponent<Player_Stats>();
-        cam = FindObjectOfType<Camera>();
+        playerAnimations = GetComponent<Player_Animations>();
+        cam = Camera.main;
         
     }
     void Update()
@@ -25,26 +27,38 @@ public class Player_Movement : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Linear Movement
+        
         
         if (Input.GetKey(KeyCode.W))
         {
-            Move(transform.up);           
+            Move(transform.up);
+            playerAnimations.Forward();
         }
         if (Input.GetKey(KeyCode.S))
         {
             Move(-transform.up);
+            playerAnimations.Backward();
         }
                  
-        //Rotation
+        
 
         if (Input.GetKey(KeyCode.D))
         {
             RotateBody(playerStats.turnSpeed);
+            if (!Input.GetKey(KeyCode.W) && !Input.GetKey(KeyCode.S)) playerAnimations.ClockWise();
+            else playerAnimations.Turn();
         }
         if (Input.GetKey(KeyCode.A))
         {
             RotateBody(-playerStats.turnSpeed);
+            if (!Input.GetKey(KeyCode.W) && !Input.GetKey(KeyCode.S)) playerAnimations.CounterClockWise();
+            else playerAnimations.Turn();
+        }
+
+        if(!Input.GetKey(KeyCode.W) && !Input.GetKey(KeyCode.S) && 
+            !Input.GetKey(KeyCode.A) && !Input.GetKey(KeyCode.D))
+        {
+            playerAnimations.IdleTracks();
         }
     }
 

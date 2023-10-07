@@ -4,60 +4,67 @@ using UnityEngine;
 
 public class Enemy_AI : MonoBehaviour
 {
-    Enemy_Stats enemyStats;
+    [SerializeField] protected LayerMask playerLayerMask;
 
-    [SerializeField] LayerMask playerLayerMask;
+    [SerializeField] protected Transform firstShootingPoint;
 
-    Transform target;
-    float distanceToTarget;
-    float nextShot;
 
-    delegate void State();
-    State movementState;
-    State combatState;
+    protected Enemy_Stats enemyStats;
+    protected Enemy_Animations enemyAnimations;
 
-    void Start()
+    
+
+    protected Transform target;
+    protected float distanceToTarget;
+    protected float nextAttack;
+
+    protected delegate void State();
+    protected State movementState;
+    protected State combatState;
+
+    protected virtual void Start()
     {
         enemyStats = GetComponent<Enemy_Stats>();      
+        enemyAnimations = GetComponent<Enemy_Animations>();
         StartMyCorroutines();
 
-        nextShot = Time.time + enemyStats.reloadTime;
+        nextAttack = Time.time + enemyStats.reloadTime;
         movementState = Idle;
         combatState = Idle;
+
+        
+        
     }
 
-    void Update()
+    protected virtual void Update()
     {
-        if (enemyStats.health <= 0)
-        {
-            movementState = Die;
-           
-        }
+
         if (target == null)
         {
-            movementState = Idle;
             combatState = Idle;
             return;
         }
         else if (target != null)
-        {            
-            RotateTurret();                    
-        }
-       
-        movementState();
+        {
+            RotateTurret();
+        }      
         combatState();
     }
-    void Idle()
+    private void FixedUpdate()
+    {
+        if (target == null)
+        {
+            movementState = Idle;
+            return;
+        }
+        movementState();
+    }
+    protected void Idle()
     {
        
     }
-    void Die()
-    {
-        Instantiate(enemyStats.XPOrb, transform.position, Quaternion.identity);
-        Destroy(gameObject);
-       
-    }
-    void StartMyCorroutines()
+
+    protected void StartMyCorroutines()
     {
         StartCoroutine(DetectionCorroutine());
         StartCoroutine(DirectionCorroutine());
@@ -66,7 +73,7 @@ public class Enemy_AI : MonoBehaviour
        
 
     }
-    IEnumerator DetectionCorroutine()
+    protected IEnumerator DetectionCorroutine()
     {
         yield return new WaitForSeconds(0.5f);
         DetectTarget();
@@ -74,19 +81,19 @@ public class Enemy_AI : MonoBehaviour
         
     }
 
-    IEnumerator DirectionCorroutine()
+    protected IEnumerator DirectionCorroutine()
     {
         yield return new WaitForSeconds(0.01f);
         
         if(target != null)
         {
             TurnToPlayer();
-            
+            enemyAnimations.Turn();
         }
         StartCoroutine(DirectionCorroutine());
     }
 
-    IEnumerator DistanceCorroutine()
+    protected IEnumerator DistanceCorroutine()
     {
         yield return new WaitForSeconds(0.1f);
         if(target != null)
@@ -96,7 +103,7 @@ public class Enemy_AI : MonoBehaviour
         }
         StartCoroutine(DistanceCorroutine());
     }
-    IEnumerator StateCorroutine()
+    protected IEnumerator StateCorroutine()
     {
         yield return new WaitForSeconds(0.1f);
        
@@ -107,40 +114,43 @@ public class Enemy_AI : MonoBehaviour
         }
         StartCoroutine(StateCorroutine());
     }
-    void CheckState()
+    protected void CheckState()
     {
         
         if (enemyStats.health <= 0)
         {
-            movementState = Die;
+            movementState = Idle;
+            enemyAnimations.IdleTracks();
             return;
         }
         if (distanceToTarget > enemyStats.maxDistanceToPlayer )
         {
             movementState = MoveTowards;
             combatState = Idle;
+            enemyAnimations.Forward();
         }
 
         if(distanceToTarget < enemyStats.minDistanceToPlayer)
         {
             movementState = MoveAway;
+            enemyAnimations.Backward();
         }
         if (distanceToTarget < enemyStats.maxDistanceToPlayer)
         {
             combatState = Attack;
         }
     }
-    void CheckDistance()
+    protected void CheckDistance()
     {
         distanceToTarget = Vector2.Distance(transform.position, target.position);
     }
-    void DetectTarget()
+    protected void DetectTarget()
     {
         if (target == null) CheckPlayerInRange();
         else if (target != null) CheckIfPlayerOutOfRange();
 
     }
-    void CheckPlayerInRange()
+    protected void CheckPlayerInRange()
     {
         Collider2D collision = Physics2D.OverlapCircle(transform.position, enemyStats.detectionRange, playerLayerMask);
         if (collision != null)
@@ -149,7 +159,7 @@ public class Enemy_AI : MonoBehaviour
         }
     }
 
-    void CheckIfPlayerOutOfRange()
+    protected void CheckIfPlayerOutOfRange()
     {
         if (Vector2.Distance(transform.position, target.position) > enemyStats.detectionRange)
         {
@@ -157,7 +167,7 @@ public class Enemy_AI : MonoBehaviour
         }
     }
 
-    void RotateTurret()
+    protected void RotateTurret()
     {
         Vector3 direction = target.position - enemyStats.turret.position;
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90.0f;
@@ -165,7 +175,7 @@ public class Enemy_AI : MonoBehaviour
         enemyStats.turret.rotation = finalRotation;
     }
 
-    void TurnToPlayer()
+    protected void TurnToPlayer()
     {
         Vector3 direction = target.position - transform.position;
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90.0f;
@@ -173,14 +183,14 @@ public class Enemy_AI : MonoBehaviour
         enemyStats.rb.MoveRotation(finalRotation);        
     }
 
-    void MoveTowards()
+    protected void MoveTowards()
     {
         if (enemyStats.rb.velocity.magnitude < enemyStats.maxSpeed)
         {
             enemyStats.rb.AddForce(transform.up * enemyStats.acceleration, ForceMode2D.Force);
         }        
     }
-    void MoveAway()
+    protected void MoveAway()
     {
         if (enemyStats.rb.velocity.magnitude < enemyStats.maxSpeed)
         {
@@ -188,21 +198,23 @@ public class Enemy_AI : MonoBehaviour
         }        
     }
 
-    void Attack()
+    protected virtual void Attack()
     {
-        if (Time.time > nextShot)
+        if (Time.time > nextAttack)
         {
-            Shoot();
+            Shoot(firstShootingPoint.transform);
             Reload();
         }      
     }
-    void Shoot()
+    protected void Shoot(Transform shootingPoint)
     {
-        Instantiate(enemyStats.enemyBullet, enemyStats.shootingPoint.position, enemyStats.turret.rotation);
+        GameObject g = Instantiate(enemyStats.enemyBullet, shootingPoint.position, enemyStats.turret.rotation);
+        g.GetComponent<Enemy_Bullet>().SetDamage(enemyStats.baseDamage);
+        Audio_Manager.instance.PlaySoundFXClip(enemyStats.shootingSFX, transform, 0.5f);
     }
-    void Reload()
+    protected void Reload()
     {
-        nextShot = Time.time + enemyStats.reloadTime;
+        nextAttack = Time.time + enemyStats.reloadTime;
     }
     
 }

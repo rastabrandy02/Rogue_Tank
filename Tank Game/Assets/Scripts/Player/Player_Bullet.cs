@@ -4,26 +4,41 @@ using UnityEngine;
 
 public class Player_Bullet : MonoBehaviour
 {
+    [SerializeField]
+    GameObject explosionFX;
      Player_Stats playerStats;
      Rigidbody2D rb;
 
-     
+     Vector3 startPos;
+
+    bool canHit = true;
+    float hitTime = 0.1f;
+    float hitTimer;
     void Start()
     {
         playerStats = GameObject.FindWithTag("Player").GetComponent<Player_Stats>();
         rb = GetComponent<Rigidbody2D>();
         rb.AddForce(transform.up * playerStats.bulletForce, ForceMode2D.Impulse);
-        Destroy(gameObject, playerStats.bulletLifespan);
+        startPos = transform.position;
+       
     }
     void Update()
     {
-        
+        if(Vector3.Distance(startPos, transform.position) >= playerStats.bulletRange)
+        {
+            Instantiate(explosionFX, transform.position, Quaternion.identity);
+            Destroy(gameObject);
+        }
+
+        hitTimer += Time.deltaTime;
+        if (hitTimer > hitTime)
+            canHit = true;
     }
 
     private void OnCollisionEnter2D(Collision2D other)
     {
         
-        if(other.gameObject.CompareTag("Enemy"))
+        if(other.gameObject.CompareTag("Enemy") && canHit)
         {
             foreach(ContactPoint2D hitPos in other.contacts)
             {
@@ -46,6 +61,7 @@ public class Player_Bullet : MonoBehaviour
 
         }
 
+        Instantiate(explosionFX, transform.position, Quaternion.identity);
         Destroy(gameObject);
     }
 }

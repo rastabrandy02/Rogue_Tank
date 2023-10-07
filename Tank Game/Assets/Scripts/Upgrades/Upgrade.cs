@@ -5,8 +5,7 @@ using UnityEngine;
 
 public enum UpgradeType
 {
-    MAX_SPEED,
-    ACCELERATION,
+    ENGINE,
     TURN_SPEED,
     TURRET_ROTATION_SPEED,
 
@@ -14,37 +13,119 @@ public enum UpgradeType
     MAX_SHIELD,
     RELOAD_TIME,
 
-    BULLET_FORCE,
-    BULLET_LIFESPAN,
-    BULLET_BASE_DAMAGE
+    BULLET_POWER,  
+    BULLET_RANGE,   
+
+
+    DEFAULT
 
 };
 public class Upgrade 
 {
     protected float limitValue;
-    protected float valueChange;
+    protected float valueChangeA;
+    protected float valueChangeB;
 
     protected UpgradeType type;
-    protected Upgrade()
+
+    int tier;
+    int maxTier;
+
+    protected string title;
+    protected string statNameA;
+    protected string statNameB;
+
+    protected bool isComposite;
+    
+    public Upgrade()
     {
-        limitValue = 0;
-        valueChange = 0;
         
+        type = UpgradeType.DEFAULT;
+        limitValue = 0;
+        valueChangeA = 0;
+        valueChangeB = 0;
+        tier = 0;
+        maxTier = 3;
+        title = "DEFAULT";
+        statNameA = "default";
+        statNameB = "default";
+        isComposite = false;
         
     }
+
+    
     
 
     public void IncreaseStat(ref float stat)
     {
-        if(stat + valueChange <= limitValue)  stat += valueChange;
-        
-        else stat =  limitValue;
+        if (stat + valueChangeA <= limitValue)
+        {
+            stat += valueChangeA;
+            TierUpUpgrade();
+        }
+
+        else
+        {
+            stat = limitValue;
+            TierUpUpgrade();
+        }
     }
 
     public void DecreaseStat (ref float stat)
     {
-        if (stat - valueChange >= limitValue) stat += valueChange;
+        if (stat - valueChangeA >= limitValue)
+        {
+            stat -= valueChangeA;
+            TierUpUpgrade();
+        }
 
-        else stat = limitValue;
+        else
+        {
+            stat = limitValue;
+            TierUpUpgrade();
+        }
+    }
+
+    public void TierUpUpgrade()
+    {
+        if (tier < maxTier) tier++;
+    }
+    public int GetTier()
+    {
+        return tier;
+    }
+    public int GetMaxTier()
+    {
+        return maxTier;
+    }
+    public UpgradeType GetUpgradeType()
+    {
+        return type;
+    }
+    public float GetValueChange(int index = 0)
+    {
+        switch (index)
+        {
+            case 0: return valueChangeA;
+            case 1: return valueChangeB;
+            default: return 0.0f;
+        }
+    }
+    public string GetTitle()
+    {
+        return title;
+    }
+    public string GetStatName(int index = 0)
+    {
+        switch(index)
+        {
+            case 0: return statNameA;                
+            case 1: return statNameB;
+            default: return ""; 
+        }
+    }
+    public bool IsComposite()
+    {
+        return isComposite;
     }
 }
